@@ -1,0 +1,2 @@
+# SSD1306 OLED Driver
+The goal of this project is to have a small abstraction layer when working with this particular screen on electronics projects using C. More will be added to this README as the project is built.

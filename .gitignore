@@ -1,0 +1,19 @@
+# Operating System Metadata
+.DS_Store
+Thumbs.db
+
+# Code Editor Configs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Compiled Artifacts and Backups
+*.o
+*.a
+*.so
+*~
+*.bak
