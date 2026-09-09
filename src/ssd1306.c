@@ -21,8 +21,8 @@ int32_t ssd1306_init(ssd1306_t *device, const ssd1306_config_t *config) {
         SSD1306_CMD_SET_START_LINE,
         SSD1306_CMD_CHARGE_PUMP,        SSD1306_CMD_CHARGE_PUMP_ENABLE,
         SSD1306_CMD_MEMORY_MODE,        0x00,
-        SSD1306_CMD_SEGMAP_REMAPPED,
-        SSD1306_CMD_COMSCAN_REMAPPED,
+        (device->orientation == SSD1306_ORIENT_NORMAL || device->orientation == SSD1306_ORIENT_90) ? SSD1306_CMD_SEGMAP_NORMAL : SSD1306_CMD_SEGMAP_REMAPPED,
+        (device->orientation == SSD1306_ORIENT_NORMAL || device->orientation == SSD1306_ORIENT_90) ? SSD1306_CMD_COMSCAN_NORMAL : SSD1306_CMD_COMSCAN_REMAPPED,
         SSD1306_CMD_DISPLAY_ON
     };
 
@@ -51,11 +51,26 @@ void ssd1306_clear_display(ssd1306_t *device) {
 }
 
 void ssd1306_draw_pixel(ssd1306_t *device, uint8_t x, uint8_t y, bool is_on) {
-    if (x >= device->width || y >= device->height || device->vram == NULL) return;
+    // We can just use math to figure out rotation
+    uint8_t hx = 0; // Hardware X
+    uint8_t hy = 0; // Hardware Y
 
-    uint8_t page = y / 8;
-    uint16_t buffer_index = (page * device->width) + x;
-    uint8_t bit_index = y % 8;
+    // Normal Orientation
+    if (device->orientation == SSD1306_ORIENT_NORMAL || device->orientation == SSD1306_ORIENT_180) {
+        if (x >= device->width || y >= device->height || device->vram == NULL) return;
+
+        hx = x;
+        hy = y;
+    } else if (device->orientation == SSD1306_ORIENT_90 || device->orientation == SSD1306_ORIENT_270) {
+        if (x >= device->height || y >= device->width || device->vram == NULL) return;
+
+        hx = (device->width - 1) - y;
+        hy = x;
+    }
+    
+    uint8_t page = hy / 8;
+    uint16_t buffer_index = (page * device->width) + hx;
+    uint8_t bit_index = hy % 8;
 
     if (is_on) {
         device->vram[buffer_index] |= (1 << bit_index);
