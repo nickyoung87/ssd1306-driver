@@ -6,5 +6,3 @@ idf_component_register(
     INCLUDE_DIRS
         "include"
 )
-
-target_include_directories($<TARGET_NAME:${COMPONENT_LIB}> INTERFACE "include")
