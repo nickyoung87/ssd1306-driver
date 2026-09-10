@@ -60,5 +60,7 @@ void ssd1306_clear_display(ssd1306_t *device);
 void ssd1306_draw_pixel(ssd1306_t *device, uint8_t x, uint8_t y, bool is_on);
 void ssd1306_draw_character(ssd1306_t *device, uint8_t x, uint8_t y, char c);
 void ssd1306_draw_text(ssd1306_t *device, uint8_t x, uint8_t y, char *str);
+void ssd1306_display_on(ssd1306_t *device);
+void ssd1306_display_off(ssd1306_t *device);
 
 #endif

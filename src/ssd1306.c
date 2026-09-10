@@ -67,7 +67,7 @@ void ssd1306_draw_pixel(ssd1306_t *device, uint8_t x, uint8_t y, bool is_on) {
         hx = (device->width - 1) - y;
         hy = x;
     }
-    
+
     uint8_t page = hy / 8;
     uint16_t buffer_index = (page * device->width) + hx;
     uint8_t bit_index = hy % 8;
@@ -126,4 +126,20 @@ void ssd1306_draw_text(ssd1306_t *device, uint8_t x, uint8_t y, char *str) {
         x += 8; // Character width
         str++;
     }
+}
+
+void ssd1306_display_on(ssd1306_t *device) {
+    uint8_t screen_commands[] = {
+        SSD1306_CMD_DISPLAY_ON
+    };
+
+    device->write(device->user_handle, true, screen_commands, sizeof(screen_commands));
+}
+
+void ssd1306_display_off(ssd1306_t *device) {
+    uint8_t screen_commands[] = {
+        SSD1306_CMD_DISPLAY_OFF
+    };
+
+    device->write(device->user_handle, true, screen_commands, sizeof(screen_commands));
 }
