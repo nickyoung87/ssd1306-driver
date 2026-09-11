@@ -1,4 +1,4 @@
-#include <ssd1306/fonts.h>
+#include <ssd1306/ssd1306_fonts.h>
 
 const ssd1306_font_config_t SSD1306_FONT_DEFAULT_CONFIG = {
     .letter_space = 1,
