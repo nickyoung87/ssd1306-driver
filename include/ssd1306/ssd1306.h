@@ -1,8 +1,8 @@
-#ifndef SSD1306_H
-#define SSD1306_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <ssd1306/ssd1306_types.h>
 
 #define SSD1306_CMD_DISPLAY_OFF          0xAE
 #define SSD1306_CMD_DISPLAY_ON           0xAF
@@ -25,35 +25,6 @@
 #define SSD1306_CMD_COMSCAN_NORMAL       0xC0
 #define SSD1306_CMD_COMSCAN_REMAPPED     0xC8
 
-typedef enum {
-    SSD1306_ORIENT_NORMAL,
-    SSD1306_ORIENT_90,
-    SSD1306_ORIENT_180,
-    SSD1306_ORIENT_270
-} ssd1306_orientation_t;
-
-typedef int32_t (*ssd1306_write_fn)(void *user_handle, bool is_command, const uint8_t *data, uint16_t length);
-
-typedef struct {
-    uint8_t *buffer_ptr;
-    uint16_t buffer_len;
-    ssd1306_write_fn write_cb;
-    void *user_handle;
-    uint8_t width;
-    uint8_t height;
-    ssd1306_orientation_t orientation;
-} ssd1306_config_t;
-
-typedef struct {
-    uint8_t *vram;
-    uint16_t buffer_size;
-    ssd1306_write_fn write;
-    void *user_handle;
-    uint8_t width;
-    uint8_t height;
-    ssd1306_orientation_t orientation;
-} ssd1306_t;
-
 int32_t ssd1306_init(ssd1306_t *device, const ssd1306_config_t *config);
 void ssd1306_update_display(ssd1306_t *device);
 void ssd1306_clear_display(ssd1306_t *device);
@@ -62,5 +33,3 @@ void ssd1306_draw_character(ssd1306_t *device, uint8_t x, uint8_t y, char c);
 void ssd1306_draw_text(ssd1306_t *device, uint8_t x, uint8_t y, char *str);
 void ssd1306_display_on(ssd1306_t *device);
 void ssd1306_display_off(ssd1306_t *device);
-
-#endif
