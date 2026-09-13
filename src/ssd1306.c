@@ -5,13 +5,14 @@
 #include <stdbool.h>
 
 int32_t ssd1306_init(ssd1306_t *device, const ssd1306_config_t *config) {
-    device->vram        = config->buffer_ptr;
-    device->buffer_size = config->buffer_len;
-    device->write       = config->write_cb;
-    device->user_handle = config->user_handle;
-    device->width       = config->width;
-    device->height      = config->height;
-    device->orientation = config->orientation;
+    device->vram         = config->buffer_ptr;
+    device->buffer_size  = config->buffer_len;
+    device->write        = config->write_cb;
+    device->user_handle  = config->user_handle;
+    device->width        = config->width;
+    device->height       = config->height;
+    device->orientation  = config->orientation;
+    device->current_font = config->default_font;
 
     const uint8_t init_commands[] = {
         SSD1306_CMD_DISPLAY_OFF,
