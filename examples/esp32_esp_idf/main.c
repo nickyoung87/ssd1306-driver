@@ -59,7 +59,8 @@ void app_main(void) {
         .write_cb = esp32_oled_write,
         .user_handle = oled_handle,
         .buffer_ptr = vram,
-        .buffer_len = sizeof(vram)
+        .buffer_len = sizeof(vram),
+        .default_font = SSD1306_FONT_DEFAULT
     };
 
     ssd1306_init(&oled_device, &oled_config);
