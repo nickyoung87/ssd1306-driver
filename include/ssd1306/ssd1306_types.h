@@ -7,7 +7,8 @@
  * SSD1306 Driver Font Types
  * ===================================== */
 typedef enum {
-    SSD1306_FONT_DEFAULT
+    SSD1306_FONT_DEFAULT,
+    SSD1306_TOTAL_FONTS // This is used here (always at the end!) to setup the master font array
 } ssd1306_font_id_t;
 
 typedef struct {
@@ -22,6 +23,13 @@ typedef struct {
     uint8_t line_height; // Line height (pixels)
     uint8_t word_space; // Space between words (pixels)
 } ssd1306_font_config_t;
+
+typedef struct {
+    const ssd1306_font_character_t *characters;
+    uint8_t start_ascii;
+    uint8_t end_ascii;
+    ssd1306_font_config_t config;
+} ssd1306_font_t;
 
 /* ========================================
  * SSD1306 Driver Types

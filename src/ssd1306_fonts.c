@@ -1,10 +1,13 @@
 #include <ssd1306/ssd1306_fonts.h>
 
-const ssd1306_font_config_t SSD1306_FONT_DEFAULT_CONFIG = {
-    .letter_space = 1,
-    .word_space   = 4,
-    .line_height  = 5
+// Include our external fonts
+extern const ssd1306_font_t font_default;
+
+const ssd1306_font_t * const fonts[SSD1306_TOTAL_FONTS] = {
+    [SSD1306_FONT_DEFAULT] = &font_default
 };
+
+
 
 void ssd1306_font_init(ssd1306_font_config_t *config) {
     // TODO
