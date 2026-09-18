@@ -11,7 +11,8 @@ A lightweight, transport-agnostic C driver for the **SSD1306** 128×64 / 128×32
 - **Display orientation** — supports Normal, 90°, 180°, and 270° rotation
 - **128×64 and 128×32** display sizes
 - **Pixel drawing** — set or clear individual pixels with orientation awareness
-- **Text rendering** — draw uppercase characters (A–Z) with a built-in 8×8 bitmap font
+- **Font system** — extensible font framework with per-character width/height, letter spacing, line height, and word spacing; ships with a default font (A–Z)
+- **Display power control** — turn the display on or off at runtime
 - **ESP32 / ESP-IDF example** included
 
 ---
@@ -22,15 +23,19 @@ A lightweight, transport-agnostic C driver for the **SSD1306** 128×64 / 128×32
 ssd1306-driver/
 ├── include/
 │   └── ssd1306/
-│       └── ssd1306.h        # Public API and types
+│       ├── ssd1306.h          # Public API
+│       ├── ssd1306_types.h    # Shared types (device, config, font structs)
+│       └── ssd1306_fonts.h    # Font system interface
 ├── src/
-│   ├── ssd1306.c            # Driver implementation
-│   └── ssd1306_fonts.c      # Font data
+│   ├── ssd1306.c              # Driver implementation
+│   ├── ssd1306_fonts.c        # Font registry
+│   └── fonts/
+│       └── default.c          # Built-in default font (A–Z)
 ├── examples/
 │   └── esp32_esp_idf/
-│       ├── main.c           # Full ESP32 example
-│       └── README.md        # ESP-IDF integration notes
-├── CMakeLists.txt           # ESP-IDF component registration
+│       ├── main.c             # Full ESP32 example
+│       └── README.md          # ESP-IDF integration notes
+├── CMakeLists.txt             # ESP-IDF component registration
 └── LICENSE
 ```
 
@@ -49,6 +54,15 @@ typedef enum {
     SSD1306_ORIENT_180,
     SSD1306_ORIENT_270
 } ssd1306_orientation_t;
+```
+
+#### `ssd1306_font_id_t`
+
+```c
+typedef enum {
+    SSD1306_FONT_DEFAULT,
+    SSD1306_TOTAL_FONTS
+} ssd1306_font_id_t;
 ```
 
 #### `ssd1306_write_fn`
@@ -79,6 +93,7 @@ Passed to `ssd1306_init`:
 | `width` | `uint8_t` | Display width in pixels (e.g. `128`) |
 | `height` | `uint8_t` | Display height in pixels (e.g. `64` or `32`) |
 | `orientation` | `ssd1306_orientation_t` | Display orientation |
+| `default_font` | `ssd1306_font_id_t` | Font to use for text rendering (e.g. `SSD1306_FONT_DEFAULT`) |
 
 ---
 
@@ -106,6 +121,14 @@ Resets the column/page cursor and flushes the entire VRAM buffer to the display 
 ---
 
 ```c
+void ssd1306_display_on(ssd1306_t *device);
+void ssd1306_display_off(ssd1306_t *device);
+```
+Send the hardware display-on / display-off command without touching the VRAM buffer. Useful for power saving.
+
+---
+
+```c
 void ssd1306_draw_pixel(ssd1306_t *device, uint8_t x, uint8_t y, bool is_on);
 ```
 Sets (`is_on = true`) or clears a single pixel. Coordinates are in the logical space after orientation is applied — for 90°/270° rotation the logical width and height are swapped.
@@ -115,14 +138,26 @@ Sets (`is_on = true`) or clears a single pixel. Coordinates are in the logical s
 ```c
 void ssd1306_draw_character(ssd1306_t *device, uint8_t x, uint8_t y, char c);
 ```
-Renders a single **uppercase** character (A–Z) using the built-in 8×8 bitmap font at position `(x, y)`.
+Renders a single character at position `(x, y)` using the device's current font.
 
 ---
 
 ```c
 void ssd1306_draw_text(ssd1306_t *device, uint8_t x, uint8_t y, char *str);
 ```
-Renders a null-terminated string of **uppercase** letters (A–Z) starting at `(x, y)`. Each character is 8 pixels wide. Non-uppercase characters are skipped but still advance the cursor.
+Renders a null-terminated string starting at `(x, y)` using the device's current font. Character advancement respects each glyph's individual width plus the font's `letter_space`. Characters outside the font's range are treated as a blank space of `word_space` pixels.
+
+---
+
+## Font System
+
+Fonts are described by three types defined in `ssd1306_types.h`:
+
+- **`ssd1306_font_character_t`** — per-glyph width, height, baseline offset, and a pointer to `uint16_t` pixel row data (one `uint16_t` per row, pixel bits in the most-significant bits).
+- **`ssd1306_font_t`** — array of `ssd1306_font_character_t`, ASCII start/end range, and a `ssd1306_font_config_t`.
+- **`ssd1306_font_config_t`** — `letter_space`, `line_height`, and `word_space` (all in pixels).
+
+The driver ships with `SSD1306_FONT_DEFAULT` (defined in `src/fonts/default.c`), which covers uppercase A–Z. Adding a new font means defining a `ssd1306_font_t`, registering it in the `fonts[]` array in `src/ssd1306_fonts.c`, and adding its ID to `ssd1306_font_id_t`.
 
 ---
 
@@ -181,13 +216,14 @@ static uint8_t vram[1024] = {0};  // 128 * 64 / 8
 ssd1306_t oled;
 
 ssd1306_config_t config = {
-    .width       = 128,
-    .height      = 64,
-    .orientation = SSD1306_ORIENT_NORMAL,
-    .write_cb    = esp32_oled_write,
-    .user_handle = oled_handle,   // i2c_master_dev_handle_t
-    .buffer_ptr  = vram,
-    .buffer_len  = sizeof(vram),
+    .width        = 128,
+    .height       = 64,
+    .orientation  = SSD1306_ORIENT_NORMAL,
+    .write_cb     = esp32_oled_write,
+    .user_handle  = oled_handle,   // i2c_master_dev_handle_t
+    .buffer_ptr   = vram,
+    .buffer_len   = sizeof(vram),
+    .default_font = SSD1306_FONT_DEFAULT,
 };
 
 ssd1306_init(&oled, &config);
@@ -213,8 +249,7 @@ Only the write callback needs to change. The pattern is always the same:
 
 ## Current Limitations
 
-- Text rendering supports **uppercase A–Z only**. Numbers and punctuation are not yet implemented.
-- The `ssd1306_fonts.h` header (Font_7x10, Font_11x18, Font_16x26) is included for future expansion and is not yet active.
+- Text rendering supports **uppercase A–Z only** in the default font. Numbers and punctuation are not yet implemented.
 
 ---
 
